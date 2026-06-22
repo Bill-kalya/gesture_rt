@@ -1,0 +1,14 @@
+/target
+**/*.rs.bk
+*.pdb
+*.exe
+*.dll
+*.so
+*.dylib
+Cargo.lock
+.env
+.vscode
+.idea
+*.log
+calibration_data.json
+frame_capture.png
