@@ -1,41 +1,49 @@
 [package]
 name = "gesture_rt"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 authors = ["GestureRT Team"]
-description = "Real-time spatial gesture recognition runtime"
+description = "Real-time spatial gesture recognition runtime - Production Architecture"
 license = "MIT OR Apache-2.0"
 
 [features]
-default = ["camera", "mediapipe", "dispatch"]
-camera = []
-mediapipe = []
-onnx = []
-dispatch = []
+default = ["dispatch"]
+dispatch = []  # OS input dispatch (keyboard, mouse, media)
+camera_opencv = ["dep:opencv"]  # Optional OpenCV camera backend
+camera_native = []  # Platform-native camera (Android, Windows MF, etc.)
+android = ["dep:jni", "dep:ndk", "dep:ndk-context"]  # Android-specific optimizations
+linux_native = []  # Linux V4L2 camera backend (enables v4l dependency)
 plugin_system = []  # Phase 2
 depth_estimation = []  # Phase 3
 dsl = []  # Phase 3
+ml_inference = ["dep:ort"]  # ONNX Runtime for ML models
+lstm_gesture = ["ml_inference"]  # LSTM gesture recognition
 
 [dependencies]
 # Async runtime
 tokio = { version = "1.35", features = ["full"] }
 async-channel = "2.1"
+tokio-stream = "0.1"
 
 # Math
 nalgebra = "0.32"
 libm = "0.2"
+num-traits = "0.2"
 
-# Vision - using default OpenCV (no specific version feature)
-opencv = { version = "0.76", features = ["buildtime-bindgen"] }
-onnxruntime = { version = "0.17", optional = true }
+# Vision - OpenCV is now optional!
+opencv = { version = "0.90", optional = true, default-features = false }
+
+# ML inference
+ort = { version = "2.0.0-rc.12", optional = true }
 
 # Time
 coarsetime = "0.1"
 
-# Serialization for config
+# Serialization
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 toml = "0.8"
+bincode = "1.3"
 
 # Logging
 log = "0.4"
@@ -45,11 +53,22 @@ env_logger = "0.10"
 anyhow = "1.0"
 thiserror = "1.0"
 
-# OS dispatch (MVP: cross-platform, will specialize later)
+# OS dispatch
 enigo = { version = "0.2", features = ["serde"] }
 
-# UI for overlay/calibration (MVP minimal)
-tauri = { version = "1.5", optional = true }
+# Android dependencies (used when android feature is enabled)
+jni = { version = "0.21", optional = true }
+ndk = { version = "0.7", optional = true }
+ndk-context = { version = "0.1", optional = true }
+
+# Native camera backends - platform specific
+# Note: These are only compiled when targeting the respective platform
+[target.'cfg(target_os = "windows")'.dependencies]
+windows = { version = "0.52", optional = true, features = [
+    "Media",
+    "Media_Capture",
+    "Media_Capture_Frames",
+] }
 
 # Development
 [dev-dependencies]
@@ -65,9 +84,5 @@ lto = true
 codegen-units = 1
 opt-level = 3
 
-[target.'cfg(windows)'.dependencies]
-winapi = { version = "0.3", features = ["winuser", "windef"] }
-
-[dependencies.onnxruntime]
-version = "0.17"
-optional = true
+[profile.dev]
+opt-level = 1

@@ -1,6 +1,8 @@
 use nalgebra::Vector3;
 use crate::gestures::temporal_engine::GestureFeatures;
 
+pub mod fuser;
+
 #[derive(Debug, Clone)]
 pub struct GestureLogits {
     pub swipe_left: f32,
